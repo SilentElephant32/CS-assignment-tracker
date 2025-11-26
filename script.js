@@ -190,6 +190,7 @@ function renderAssignments() {
     }
     
     content.innerHTML = html;
+    updateCountdown();
 }
 
 // kinda useless but whatever
@@ -232,12 +233,21 @@ const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"
 function switchTheme(e) {
     if (e.target.checked) {
         document.body.classList.add('dark-mode');
+        setCookie('theme', 'dark');
     } else {
         document.body.classList.remove('dark-mode');
+        setCookie('theme', 'light');
     }
 }
 
 toggleSwitch.addEventListener('change', switchTheme, false);
+
+// Check for saved theme
+const currentTheme = getCookie('theme');
+if (currentTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    toggleSwitch.checked = true;
+}
 
 // Initialize and start it up
 loadAssignments();
