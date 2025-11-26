@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider round"></div>
+            </label>
+            <em>Dark Mode</em>
+        </div>
+        <h1>Assignment Tracker</h1>
+        <p class="subtitle">Track your Computer Science assignments</p>
+        
+        <div class="controls">
+            <button onclick="loadAssignments()">Refresh</button>
+            <button onclick="clearProgress()">Clear All Progress</button>
+        </div>
+        
+        <div id="content">
+            <div class="loading">Loading assignments...</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
