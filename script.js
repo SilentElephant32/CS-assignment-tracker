@@ -131,15 +131,28 @@ function renderAssignments() {
     });
     
     const overallPercent = totalAssignments > 0 ? Math.round((totalCompleted / totalAssignments) * 100) : 0;
+
+    // calculate assignments needed per day based on how many completed and time left
+    const now = new Date();
+    const diff = END_DATE - now;
+    const daysLeft = diff / (1000 * 60 * 60 * 24);
+    const remaining = totalAssignments - totalCompleted;
+    const perDay = (daysLeft > 0 && remaining > 0) ? (remaining / daysLeft).toFixed(2) : "0.00"; // round to 2 decimal places
     
     let html = `
         <div class="overall-stats">
             <h2>Overall Progress</h2>
             <p>${totalCompleted} of ${totalAssignments} completed (${overallPercent}%)</p>
         </div>
-        <div class="countdown-section" style="background: none; color: #333; padding: 10px; margin-bottom: 20px; box-shadow: none;">
-            <h3 style="font-size: 1em; font-weight: normal; margin-bottom: 5px;">Time Until Last Day of Class</h3>
-            <div id="countdown" class="countdown" style="font-size: 1.2em; font-weight: normal; color: #333;"></div>
+        <div class="countdown-section" style="background: none; padding: 10px; margin-bottom: 20px; box-shadow: none; display: flex; justify-content: center; gap: 40px;">
+            <div style="text-align: center;">
+                <h3 style="font-size: 1em; font-weight: normal; margin-bottom: 5px;">Time Until Last Day</h3>
+                <div id="countdown" class="countdown" style="font-size: 1.2em; font-weight: normal;"></div>
+            </div>
+            <div style="text-align: center;">
+                <h3 style="font-size: 1em; font-weight: normal; margin-bottom: 5px;">Assignments / Day</h3>
+                <div style="font-size: 1.2em; font-weight: normal;">${perDay} needed</div>
+            </div>
         </div>
     `;
     
