@@ -16,7 +16,17 @@
             <em>Dark Mode</em>
         </div>
         <h1>Assignment Tracker</h1>
-        <p class="subtitle">Track your Computer Science assignments</p>
+        <p class="subtitle">Track your Computing Science assignments</p>
+        
+        <div class="course-type-selector">
+            <h3>Select Course Type:</h3>
+            <div class="course-type-buttons">
+                <button class="course-type-btn active" data-type="cs" onclick="switchCourseType('cs')">Computing Science</button>
+                <button class="course-type-btn" data-type="robotics" onclick="switchCourseType('robotics')">Robotics</button>
+                <button class="course-type-btn" data-type="it" onclick="switchCourseType('it')">Information Technology</button>
+                <button class="course-type-btn" data-type="dmd" onclick="switchCourseType('dmd')">Digital Media & Design</button>
+            </div>
+        </div>
         
         <div class="controls">
             <button onclick="loadAssignments()">Refresh</button>
