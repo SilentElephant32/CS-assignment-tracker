@@ -1,12 +1,43 @@
 // set the actual course links so we can get the data
-const COURSES = [
-    { url: 'https://bev.facey.rocks/cs10.html', name: 'CS 10' },
-    { url: 'https://bev.facey.rocks/cs20.html', name: 'CS 20' },
-    { url: 'https://bev.facey.rocks/cs30.html', name: 'CS 30' }
-];
+const COURSE_TYPES = {
+    cs: {
+        name: 'Computing Science',
+        courses: [
+            { url: 'https://bev.facey.rocks/cs10.html', name: 'CS 10' },
+            { url: 'https://bev.facey.rocks/cs20.html', name: 'CS 20' },
+            { url: 'https://bev.facey.rocks/cs30.html', name: 'CS 30' }
+        ]
+    },
+    robotics: {
+        name: 'Robotics',
+        courses: [
+            { url: 'https://bev.facey.rocks/r10.html', name: 'R 10' },
+            { url: 'https://bev.facey.rocks/r20.html', name: 'R 20' },
+            { url: 'https://bev.facey.rocks/r30.html', name: 'R 30' }
+        ]
+    },
+    it: {
+        name: 'Information Technology',
+        courses: [
+            { url: 'https://bev.facey.rocks/it10.html', name: 'IT 10' },
+            { url: 'https://bev.facey.rocks/it20.html', name: 'IT 20' },
+            { url: 'https://bev.facey.rocks/it30.html', name: 'IT 30' }
+        ]
+    },
+    dmd: {
+        name: 'Digital Media and Design',
+        courses: [
+            { url: 'https://bev.facey.rocks/DMD10.html', name: 'DMD 10' },
+            { url: 'https://bev.facey.rocks/DMD20.html', name: 'DMD 20' },
+            { url: 'https://bev.facey.rocks/DMD30.html', name: 'DMD 30' }
+        ]
+    }
+};
 
 // save data to cookies so we dont need a backend (can be hosted on github pages now :)  )
-const COOKIE_NAME = 'assignment_progress';
+let currentCourseType = 'cs'; // default to Computing Science
+let COURSES = COURSE_TYPES[currentCourseType].courses;
+const COOKIE_NAME_PREFIX = 'assignment_progress_';
 const END_DATE = new Date('2026-01-20T23:59:59');
 
 function getCookie(name) {
@@ -30,9 +61,39 @@ function setCookie(name, value, days = 365) {
     document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))};${expires};path=/`;
 }
 
+function getCurrentCookieName() {
+    return COOKIE_NAME_PREFIX + currentCourseType;
+}
+
+function switchCourseType(type) {
+    if (COURSE_TYPES[type]) {
+        currentCourseType = type;
+        COURSES = COURSE_TYPES[currentCourseType].courses;
+        setCookie('selected_course_type', type);
+        loadAssignments();
+        updateCourseTypeDisplay();
+    }
+}
+
+function updateCourseTypeDisplay() {
+    const buttons = document.querySelectorAll('.course-type-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === currentCourseType) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update the subtitle
+    const subtitle = document.querySelector('.subtitle');
+    if (subtitle) {
+        subtitle.textContent = `Track your ${COURSE_TYPES[currentCourseType].name} assignments`;
+    }
+}
+
 
 // gets data from the course page (based on the url)
-async function fetchAssignments(url) {
+async function fetchAssignments(url, globalSeenHrefs) {
     const response = await fetch(url);
     const html = await response.text();
     const parser = new DOMParser();
@@ -40,13 +101,19 @@ async function fetchAssignments(url) {
     const links = doc.querySelectorAll('a[href]');
     
     const assignments = [];
+    
     links.forEach(link => {
         const href = link.getAttribute('href');
         const text = link.textContent.trim();
         // Ignore the home page link and GitHub edit links
         if (href && text && 
             href !== 'https://bev.facey.rocks/' && 
-            !href.includes('github.com')) {
+            !href.includes('github.com') &&
+            !href.includes('netacad.com') &&
+             !href.includes('moodlehub.ca') &&
+            !globalSeenHrefs.has(href)) { // Check if we've already seen this link globally
+            
+            globalSeenHrefs.add(href); // Add to global seen set
             assignments.push({
                 href: href,
                 name: text
@@ -54,12 +121,77 @@ async function fetchAssignments(url) {
         }
     });
     
+    // Special handling for IT pages - look for NET course codes that aren't already linked
+    if (url.includes('/it')) {
+        // Get all linked NET courses to avoid duplicates
+        const linkedNetCourses = new Set();
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            const text = link.textContent.trim();
+            
+            // Check for NET courses in both href and link text
+            if (href && (href.includes('NET') || href.match(/\/NET\d+\.html/))) {
+                const netMatch = href.match(/NET\d+/);
+                if (netMatch) {
+                    linkedNetCourses.add(netMatch[0]);
+                }
+            }
+            // Also check if the link text itself is a NET course
+            if (text && text.match(/NET\d+/)) {
+                const netMatch = text.match(/NET\d+/);
+                if (netMatch) {
+                    linkedNetCourses.add(netMatch[0]);
+                }
+            }
+        });
+        
+        console.log('Linked NET courses found:', Array.from(linkedNetCourses));
+        
+        // Look for NET course mentions in text that aren't linked
+        const netPattern = /NET(\d+):\s*([^,\n\r<>]+)/gi;
+        let match;
+        
+        console.log('Searching for NET patterns in HTML...');
+        
+        while ((match = netPattern.exec(html)) !== null) {
+            const netCode = `NET${match[1]}`; // e.g., "NET2110"
+            const netTitle = match[2].trim(); // e.g., "Telecommunications 1"
+            const netUrl = `https://bev.facey.rocks/${netCode}.html`;
+            
+            console.log(`Found NET course in text: ${netCode}: ${netTitle}`);
+            
+            // Only add if it's not already linked and hasn't been seen globally
+            if (!linkedNetCourses.has(netCode) && !globalSeenHrefs.has(netUrl)) {
+                console.log(`Adding NET course: ${netCode}`);
+                try {
+                    // Test if the NET course page exists
+                    const testResponse = await fetch(netUrl, { method: 'HEAD' });
+                    if (testResponse.ok) {
+                        globalSeenHrefs.add(netUrl);
+                        assignments.push({
+                            href: netUrl,
+                            name: `${netCode}: ${netTitle}`
+                        });
+                        console.log(`Successfully added: ${netCode}: ${netTitle}`);
+                    } else {
+                        console.log(`NET course ${netCode} page returned status: ${testResponse.status}`);
+                    }
+                } catch (e) {
+                    // Page doesn't exist, skip it
+                    console.log(`NET course ${netCode} page not found:`, e);
+                }
+            } else {
+                console.log(`Skipping ${netCode} - already linked or seen globally`);
+            }
+        }
+    }
+    
     return assignments;
 }
 
 // update cookie and re-render assignments when an assignment is toggled
 function toggleAssignment(courseUrl, assignmentHref) {
-    const progress = getCookie(COOKIE_NAME);
+    const progress = getCookie(getCurrentCookieName());
     if (!progress[courseUrl]) {
         progress[courseUrl] = [];
     }
@@ -71,12 +203,12 @@ function toggleAssignment(courseUrl, assignmentHref) {
         progress[courseUrl].push(assignmentHref);
     }
     
-    setCookie(COOKIE_NAME, progress);
+    setCookie(getCurrentCookieName(), progress);
     renderAssignments();
 }
 
 function isCompleted(courseUrl, assignmentHref) {
-    const progress = getCookie(COOKIE_NAME);
+    const progress = getCookie(getCurrentCookieName());
     return progress[courseUrl] && progress[courseUrl].includes(assignmentHref);
 }
 
@@ -89,10 +221,12 @@ async function loadAssignments() {
     
     try {
         allAssignments = {};
+        const globalSeenHrefs = new Set(); // Global duplicate tracking across all courses
         
+        // Process courses in order (10, 20, 30) to prioritize earlier courses
         for (const course of COURSES) {
             try {
-                const assignments = await fetchAssignments(course.url);
+                const assignments = await fetchAssignments(course.url, globalSeenHrefs);
                 allAssignments[course.url] = {
                     name: course.name,
                     assignments: assignments
@@ -117,7 +251,7 @@ async function loadAssignments() {
 // basically the big data handler that loads all the elements based on what we got from loadAssignments
 function renderAssignments() {
     const content = document.getElementById('content');
-    const progress = getCookie(COOKIE_NAME);
+    const progress = getCookie(getCurrentCookieName());
     
     let totalAssignments = 0;
     let totalCompleted = 0;
@@ -209,7 +343,7 @@ function renderAssignments() {
 // kinda useless but whatever
 function clearProgress() {
     if (confirm('Are you sure you want to clear all progress? This cannot be undone.')) {
-        setCookie(COOKIE_NAME, {});
+        setCookie(getCurrentCookieName(), {});
         renderAssignments();
     }
 }
@@ -262,8 +396,20 @@ if (currentTheme === 'dark') {
     toggleSwitch.checked = true;
 }
 
+// Check for saved course type
+const savedCourseType = getCookie('selected_course_type');
+if (savedCourseType && COURSE_TYPES[savedCourseType]) {
+    currentCourseType = savedCourseType;
+    COURSES = COURSE_TYPES[currentCourseType].courses;
+}
+
 // Initialize and start it up
 loadAssignments();
+
+// Update the course type display after DOM is loaded
+setTimeout(() => {
+    updateCourseTypeDisplay();
+}, 100);
 
 // keep the countdown updated every second
 updateCountdown();
