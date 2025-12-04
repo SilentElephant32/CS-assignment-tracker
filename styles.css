@@ -205,6 +205,91 @@ button:active {
     transform: scale(0.98);
 }
 
+/* Course Type Selector Styles */
+.course-type-selector {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+}
+
+.course-type-selector h3 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.course-type-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.course-type-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: normal;
+    transition: all 0.3s ease;
+    min-width: 140px;
+}
+
+.course-type-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+.course-type-btn.active {
+    background: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.course-type-btn.active:hover {
+    background: #5568d3;
+}
+
+/* Responsive design for course type selector */
+@media (max-width: 768px) {
+    .course-type-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .course-type-btn {
+        width: 100%;
+        max-width: 250px;
+    }
+}
+
+/* Dark Mode for Course Type Selector */
+body.dark-mode .course-type-selector {
+    background: #3d3d3d;
+    border-color: #4d4d4d;
+}
+
+body.dark-mode .course-type-selector h3 {
+    color: #f0f0f0;
+}
+
+body.dark-mode .course-type-btn {
+    background: #5a5a5a;
+}
+
+body.dark-mode .course-type-btn:hover {
+    background: #6a6a6a;
+}
+
+body.dark-mode .course-type-btn.active {
+    background: #667eea;
+}
+
 /* Dark Mode Styles */
 body.dark-mode {
     background: #1a1a1a;
