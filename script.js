@@ -38,7 +38,7 @@ const COURSE_TYPES = {
 let currentCourseType = 'cs'; // default to Computing Science
 let COURSES = COURSE_TYPES[currentCourseType].courses;
 const COOKIE_NAME_PREFIX = 'assignment_progress_';
-const END_DATE = new Date('2026-01-20T23:59:59');
+const END_DATE = new Date('2026-06-19T23:59:59');
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
